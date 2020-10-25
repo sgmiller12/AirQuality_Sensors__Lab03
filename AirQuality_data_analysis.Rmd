@@ -5,5 +5,115 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(outliers)
+library(SDMTools)
+library(stats)
+library(lattice)
+library(gplots)
+library(tidyverse)
+library(readr)
+thursday_data <- read_csv("thursday_data.csv")
+tuesday_data <- read_csv("tuesday_data.csv")
+
+### Basic analysis of thursday data
+th_combined_means <- thursday_data %>%
+  group_by(location, sensor) %>%
+  summarize(th_mean_measurement = mean(pm_25),
+            th_mean_sd = sd(pm_25))
+View(th_combined_means)
+
+ggplot(data = th_combined_means, aes(x = sensor, y = th_mean_measurement, color = location)) +
+  geom_point() + 
+  labs(x = "sensor",
+     y = "mean PM2.5 ",
+     title = "PM2.5 Measurements for Thursday") + 
+  geom_errorbar(aes(ymin=th_mean_measurement-th_mean_sd, ymax=th_mean_measurement+th_mean_sd)) + 
+  facet_wrap(~location)
+
+### same thing but for tuesday data
+tu_combined_means <- tuesday_data %>%
+  group_by(location, sensor) %>%
+  summarize(tu_mean_measurement = mean(pm_25),
+            tu_mean_sd = sd(pm_25))
+
+ggplot(data = tu_combined_means, aes(x = sensor, y = tu_mean_measurement, color = location)) +
+  geom_point() + 
+  labs(x = "sensor",
+     y = "mean PM2.5 ",
+     title = "PM2.5 Measurements for Tuesday") + 
+  geom_errorbar(aes(ymin=tu_mean_measurement-tu_mean_sd, ymax=tu_mean_measurement+tu_mean_sd)) + 
+  facet_wrap(~location)
+
+### experimenting with grouping locations by north/south of canyon for tuesday data
+tu_combined_means <- tuesday_data %>%
+  group_by(sensor,location) %>%
+  summarize(tu_mean_measurement = mean(pm_25),
+            tu_mean_sd = sd(pm_25)) 
+tu_direction <- mutate(tu_combined_means, direction = ifelse((sensor == "3" | sensor == "5" |sensor == "10" |sensor == "11" |sensor == "19"),"North","South"))
+tu_direction
+
+
+ggplot(data = tu_direction, aes(x = sensor, y = tu_mean_measurement, color = direction)) +
+  geom_point() + 
+  labs(x = "Sensor",
+     y = "mean PM2.5 ",
+     title = "PM2.5 Measurements on Tuesday") + 
+  geom_errorbar(aes(ymin=tu_mean_measurement-tu_mean_sd, ymax=tu_mean_measurement+tu_mean_sd)) + 
+  facet_wrap(~location) 
+
+### Same for thursday data
+th_combined_means <- thursday_data %>%
+  group_by(sensor,location) %>%
+  summarize(th_mean_measurement = mean(pm_25),
+            th_mean_sd = sd(pm_25)) 
+th_direction <- mutate(th_combined_means, direction = ifelse((sensor == "3" | sensor == "5" |sensor == "10" |sensor == "11" |sensor == "19"),"North","South"))
+
+ggplot(data = th_direction, aes(x = sensor, y = th_mean_measurement, color = direction)) +
+  geom_point() + 
+  labs(x = "Sensor",
+     y = "mean PM2.5 ",
+     title = "PM2.5 Measurements on Thursday") + 
+  geom_errorbar(aes(ymin=th_mean_measurement-th_mean_sd, ymax=th_mean_measurement+th_mean_sd)) + 
+  facet_wrap(~location) 
+
+### means and sd for North vs South 
+tu_direction_means <- tu_direction %>%
+  group_by(direction,location) %>%
+  summarize(tu_dir_mean_measurement = mean(tu_mean_measurement),
+            tu_dir_mean_sd = sd(tu_mean_measurement))
+tu_direction_means
+
+ggplot(data = tu_direction_means, aes(x = direction, y = tu_dir_mean_measurement, color = direction)) +
+  geom_point() + 
+  labs(x = "Sensor",
+     y = "mean PM2.5 ",
+     title = "PM2.5 Measurements on Tuesday") + 
+  geom_errorbar(aes(ymin=tu_dir_mean_measurement-tu_dir_mean_sd, ymax=tu_dir_mean_measurement+tu_dir_mean_sd)) + 
+  facet_wrap(~location) 
+
+th_direction_means <- th_direction %>%
+  group_by(direction,location) %>%
+  summarize(th_dir_mean_measurement = mean(th_mean_measurement),
+            th_dir_mean_sd = sd(th_mean_measurement))
+th_direction_means
+
+ggplot(data = th_direction_means, aes(x = direction, y = th_dir_mean_measurement, color = direction)) +
+  geom_point() + 
+  labs(x = "Sensor",
+     y = "mean PM2.5 ",
+     title = "PM2.5 Measurements on Thursday") + 
+  geom_errorbar(aes(ymin=th_dir_mean_measurement-th_dir_mean_sd, ymax=th_dir_mean_measurement+th_dir_mean_sd)) + 
+  facet_wrap(~location) 
+
+###statistical tests for the outside values only
+tu_north <- c(0.48039216,0.53868195,0.44478064,0.34682081,0.05172414)
+tu_south <- c(0.41820768,0.38055556,0.66339411,0.30813124)
+var.test(tu_north,tu_south)
+t.test(tu_north,tu_south,mu=0,paired = FALSE,var.equal = TRUE)
+
+th_north <- c(23.162996,21.081123,18.034582,0.000000,7.642450)
+th_south <- c(20.199719,19.636364,23.956772,17.619318)
+var.test(th_north,th_south)
+t.test(tu_north,tu_south,mu=0,paired = FALSE,var.equal = FALSE)
 ```
 
