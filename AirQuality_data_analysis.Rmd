@@ -5,6 +5,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+### loading a bunch of libraries
 library(outliers)
 library(SDMTools)
 library(stats)
@@ -12,7 +13,10 @@ library(lattice)
 library(gplots)
 library(tidyverse)
 library(readr)
-thursday_data <- read_csv("thursday_data.csv")
+
+### both csv files loaded here are tidy versions of the class sensor data, and are availible on the GitHub repository https://github.com/sgmiller12/AirQuality_Sensors__Lab03 
+
+thursday_data <- read_csv("thursday_data.csv") 
 tuesday_data <- read_csv("tuesday_data.csv")
 
 ### Basic analysis of thursday data
@@ -30,7 +34,7 @@ ggplot(data = th_combined_means, aes(x = sensor, y = th_mean_measurement, color 
   geom_errorbar(aes(ymin=th_mean_measurement-th_mean_sd, ymax=th_mean_measurement+th_mean_sd)) + 
   facet_wrap(~location)
 
-### same thing but for tuesday data
+### same basic analysis but for tuesday data
 tu_combined_means <- tuesday_data %>%
   group_by(location, sensor) %>%
   summarize(tu_mean_measurement = mean(pm_25),
@@ -44,14 +48,12 @@ ggplot(data = tu_combined_means, aes(x = sensor, y = tu_mean_measurement, color 
   geom_errorbar(aes(ymin=tu_mean_measurement-tu_mean_sd, ymax=tu_mean_measurement+tu_mean_sd)) + 
   facet_wrap(~location)
 
-### experimenting with grouping locations by north/south of canyon for tuesday data
+### grouping locations by north/south of canyon for Tuesday data
 tu_combined_means <- tuesday_data %>%
   group_by(sensor,location) %>%
   summarize(tu_mean_measurement = mean(pm_25),
             tu_mean_sd = sd(pm_25)) 
-tu_direction <- mutate(tu_combined_means, direction = ifelse((sensor == "3" | sensor == "5" |sensor == "10" |sensor == "11" |sensor == "19"),"North","South"))
-tu_direction
-
+tu_direction <- mutate(tu_combined_means, direction = ifelse((sensor == "3" | sensor == "5" |sensor == "10" |sensor == "11" |sensor == "19"),"North","South")) ###this is to create a new column which indicates whether the sensor location was north or south of the Reed Canyon 
 
 ggplot(data = tu_direction, aes(x = sensor, y = tu_mean_measurement, color = direction)) +
   geom_point() + 
@@ -61,12 +63,12 @@ ggplot(data = tu_direction, aes(x = sensor, y = tu_mean_measurement, color = dir
   geom_errorbar(aes(ymin=tu_mean_measurement-tu_mean_sd, ymax=tu_mean_measurement+tu_mean_sd)) + 
   facet_wrap(~location) 
 
-### Same for thursday data
+### Grouping of locations by north/south of canyon for Thursday data
 th_combined_means <- thursday_data %>%
   group_by(sensor,location) %>%
   summarize(th_mean_measurement = mean(pm_25),
             th_mean_sd = sd(pm_25)) 
-th_direction <- mutate(th_combined_means, direction = ifelse((sensor == "3" | sensor == "5" |sensor == "10" |sensor == "11" |sensor == "19"),"North","South"))
+th_direction <- mutate(th_combined_means, direction = ifelse((sensor == "3" | sensor == "5" |sensor == "10" |sensor == "11" |sensor == "19"),"North","South")) ###this is to create a new column which indicates whether the sensor location was north or south of the Reed Canyon 
 
 ggplot(data = th_direction, aes(x = sensor, y = th_mean_measurement, color = direction)) +
   geom_point() + 
@@ -76,12 +78,11 @@ ggplot(data = th_direction, aes(x = sensor, y = th_mean_measurement, color = dir
   geom_errorbar(aes(ymin=th_mean_measurement-th_mean_sd, ymax=th_mean_measurement+th_mean_sd)) + 
   facet_wrap(~location) 
 
-### means and sd for North vs South 
+### Basic analysis repeated, but using combined means for sensors north vs south of the Reed Canyon
 tu_direction_means <- tu_direction %>%
   group_by(direction,location) %>%
   summarize(tu_dir_mean_measurement = mean(tu_mean_measurement),
             tu_dir_mean_sd = sd(tu_mean_measurement))
-tu_direction_means
 
 ggplot(data = tu_direction_means, aes(x = direction, y = tu_dir_mean_measurement, color = direction)) +
   geom_point() + 
@@ -113,7 +114,17 @@ t.test(tu_north,tu_south,mu=0,paired = FALSE,var.equal = TRUE)
 
 th_north <- c(23.162996,21.081123,18.034582,0.000000,7.642450)
 th_south <- c(20.199719,19.636364,23.956772,17.619318)
-var.test(th_north,th_south)
+var.test(th_north,th_south) 
 t.test(tu_north,tu_south,mu=0,paired = FALSE,var.equal = FALSE)
+
+### grubbs tests for: all data tuesday and thursday, Thursday North/South combined means, and Tuesday North/South combined means, respectively 
+grubbs.test(tu_direction$tu_mean_measurement)
+grubbs.test(th_direction$th_mean_measurement)
+
+grubbs.test(th_north)
+grubbs.test(th_south)
+
+grubbs.test(tu_north)
+grubbs.test(tu_south)
 ```
 
